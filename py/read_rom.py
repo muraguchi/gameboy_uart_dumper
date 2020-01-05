@@ -2,8 +2,22 @@
 import serial
 import struct
 
-ser = serial.Serial('/dev/ttyUSB0',19200,timeout=None)
+ser = serial.Serial('/dev/ttyUSB0',460800,timeout=None)
 outfile="NONAME.gb"
+
+logo_expected = [0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83,
+                 0x00, 0x0C, 0x00, 0x0D, 0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E,
+                 0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99, 0xBB, 0xBB, 0x67, 0x63,
+                 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E]
+
+# Logo check ( 48 bytes )
+for addr in range(48):
+    ser.write (("R1%04X" %( addr+0x104 )).encode())
+    readdata=int(ser.read(2).decode(),16)
+    if ( readdata != logo_expected[addr] ):
+        print("Error logo verify at addr 0x%04X. expected value 0x%02X, read value 0x%02X" % (addr+0x104,logo_expected[addr],readdata))
+        quit()
+print("Logo verify done.")
 
 # Get_cart_type
 ser.write (("R1%04X" %( 0x0143)).encode() )
@@ -134,7 +148,7 @@ else:
 
 
 
-outfile=title.replace(".","_").replace(" ","_").replace('\x00','').replace('.','_').replace('/','_').replace("\'",'_')+".gb"
+outfile=title.replace('!',"_").replace(" ","_").replace('\x00','').replace('.','_').replace('/','_').replace("-","_").replace("\'",'_').replace('&','_')+".gb"
 for i in range(16):
     outfile=outfile.replace("__","_")
 outfile=outfile.replace("_.gb",".gb")
@@ -213,11 +227,37 @@ else :
                 # Lower 8bit
                 ser.write (("W12100%02X" %(bank_index&0xff) ).encode())
                 data = int(ser.read(2).decode(),16)
-            # HuC1 or TAMA5
+            # TAMA5
+            elif(cart_type==0xfd):
+
+                # Init 
+                ser.write ( ("W0A0010A" ).encode() )
+                data = int(ser.read(2).decode(),16)
+                
+                # Select lower nibble bank reg 
+                ser.write (("W0A00100" ).encode() )
+                data = int(ser.read(2).decode(),16)
+                
+                # Write lower nibble bank address
+                ser.write (("W0A000%02X" % (bank_index&0xf) ).encode() )
+                data = int(ser.read(2).decode(),16)
+
+                # Select upper nibble bank reg 
+                ser.write (("W0A00101" ).encode() )
+                data = int(ser.read(2).decode(),16)
+                
+                # Write upper nibble bank address
+                ser.write (("W0A000%02X" % ( (bank_index&0xf0)>>4) ).encode() )
+                data = int(ser.read(2).decode(),16)
+                
+            # HuC1, HuC3
             elif(cart_type==0xfe or cart_type==0xff):
                 #  6bit
+                #print("W12100%02X" %(bank_index&0x3F))
                 ser.write (("W12100%02X" %(bank_index&0x3F) ).encode() )
                 data = int(ser.read(2).decode(),16)
+            else:
+                print("Error. No BANK procs...")
             print("Change Bank 0x%03X (%d) "%(bank_index,bank_index))
             for ra in range(0x4000,0x8000):
                 if(ra % 0x4000 == 0): 

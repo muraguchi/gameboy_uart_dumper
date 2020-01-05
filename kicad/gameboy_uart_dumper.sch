@@ -5,8 +5,8 @@ $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "2019-11-29"
-Rev "1.00"
+Date "2020-01-06"
+Rev "1.10"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -62,7 +62,7 @@ L MCU_Microchip_ATtiny:ATtiny2313V-10PU U2
 U 1 1 5DDDC0C3
 P 4050 8350
 F 0 "U2" H 4050 7161 50  0000 C CNN
-F 1 "ATtiny2313V-10PU" H 4050 7070 50  0000 C CNN
+F 1 "ATtiny2313A-20PU" H 4050 7070 50  0000 C CNN
 F 2 "Package_DIP:DIP-20_W7.62mm" H 4050 8350 50  0001 C CIN
 F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-2543-AVR-ATtiny2313_Datasheet.pdf" H 4050 8350 50  0001 C CNN
 	1    4050 8350
@@ -73,7 +73,7 @@ L Device:Crystal Y1
 U 1 1 5DDDD9F5
 P 2250 7900
 F 0 "Y1" V 2204 8031 50  0000 L CNN
-F 1 "10MHz" V 2295 8031 50  0000 L CNN
+F 1 "18.432MHz" V 2295 8031 50  0000 L CNN
 F 2 "" H 2250 7900 50  0001 C CNN
 F 3 "~" H 2250 7900 50  0001 C CNN
 	1    2250 7900
@@ -424,7 +424,6 @@ Wire Wire Line
 	4650 8450 4800 8450
 Wire Wire Line
 	4650 8550 4800 8550
-NoConn ~ 4650 8650
 NoConn ~ 4650 8750
 NoConn ~ 4650 8850
 NoConn ~ 4650 8950
@@ -714,7 +713,7 @@ Wire Wire Line
 Text GLabel 13500 2750 0    50   Input ~ 0
 SHIFT_CLK
 Text GLabel 13500 2950 0    50   Input ~ 0
-GB_RDB
+U6_PLB
 Text GLabel 14500 3950 2    50   Output ~ 0
 U6_Q7
 Wire Wire Line
@@ -2251,4 +2250,8 @@ F 3 "" H 1750 1600 50  0001 C CNN
 	1    1750 1600
 	1    0    0    -1  
 $EndComp
+Text GLabel 4800 8650 2    50   Output ~ 0
+U6_PLB
+Wire Wire Line
+	4650 8650 4800 8650
 $EndSCHEMATC

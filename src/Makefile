@@ -5,8 +5,14 @@ compile:
 	avr-size -C main.elf --mcu=attiny2313
 upload:
 	#firmware uploading command HERE for your environment. 
-	#sudo avrdude -v -v -c arduino-ft232r -B 10000  -P ft1 -p t2313  -U flash:w:main.hex	
-	#sudo avrdude -V -B 1000 -c avrispmkII -p t2313 -U flash:w:main.hex
+	#sudo avrdude -v -v -c arduino-ft232r -B 100 -P ft1 -p t2313  -U flash:w:main.hex	
+        #
+        # E:0xff, H:0xdf, L:0xff
+	#sudo avrdude -V -c avrispmkII -p t2313 -U efuse:w:0xFF:m
+        #sudo avrdude -V -c avrispmkII -p t2313 -U hfuse:w:0xDF:m
+	#sudo avrdude -V -c avrispmkII -p t2313 -U lfuse:w:0xFF:m
+	# 
+	sudo avrdude -V -c avrispmkII -p t2313 -U flash:w:main.hex
 	
 clean:
 	rm -rf main.elf main.hex 

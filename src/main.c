@@ -34,14 +34,14 @@ http://opensource.org/licenses/mit-license.php
 
 
 // 10MHz
-#define F_CPU 10000000UL
+#define F_CPU 18432000UL
 
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-// UART baudrate : 19.2kbps
-#define BAUDRATE 19200
+// UART baudrate : 460.8kbps
+#define BAUDRATE 460800
 
 // receive buffer 2^USART_RX_SZ_BITS = USART_RX_LEN
 #define USART_RX_SZ_BITS 2 
@@ -51,23 +51,33 @@ http://opensource.org/licenses/mit-license.php
 #define USART_TX_LEN     4
 
 
-#define GB_DDR     DDRB
-#define GB_PORT    PORTB
-#define GB_PIN     PINB
-#define GB_SI      PB0
-#define GB_WRB     PB1
-#define GB_RDB     PB2
-#define GB_CSB     PB3
-#define GB_SCK     PB4
-#define GB_RCK     PB5
-#define GB_OEB     PB6
-#define GB_SO      PB7
-
+#define GB1_DDR     DDRB
+#define GB2_DDR     DDRD
+#define GB1_PORT    PORTB
+#define GB2_PORT    PORTD
+#define GB1_PIN     PINB
+#define GB2_PIN     PIND
+#define GB1_SI      PB0
+#define GB1_WRB     PB1
+#define GB1_PLB     PB2
+#define GB1_CSB     PB3
+#define GB1_SCK     PB4
+#define GB1_RCK     PB5
+#define GB1_OEB     PB6
+#define GB1_SO      PB7
+#define GB2_RDB     PD2
+#define GB_WAIT_RD  3
+#define GB_WAIT_WR  3
 
 void GB_init();
 void USART_init();
 char USART_rx_pop(unsigned char *rd);
 void USART_tx_push(unsigned char wr);
+unsigned char hex_to_bin(unsigned char hex);
+unsigned char nibble_to_hex(unsigned char bin);
+void GB_msbfirst_shift(unsigned char data);
+unsigned char GB_read(unsigned char addrh,unsigned char addrl);
+void GB_write(unsigned char addrh,unsigned char addrl, unsigned char wr_data);
 
 static volatile unsigned char USART_rx_wr_ptr;
 static volatile unsigned char USART_rx_rd_ptr;
@@ -75,13 +85,39 @@ static volatile unsigned char USART_rx_b[USART_RX_LEN];
 static volatile unsigned char USART_tx_wr_ptr;
 static volatile unsigned char USART_tx_rd_ptr;
 static volatile unsigned char USART_tx_b[USART_TX_LEN];
-
 static volatile unsigned char chip_select;
 
+ISR(USART_RX_vect){
+  unsigned char next_rx_wr_ptr;
+  next_rx_wr_ptr = ( USART_rx_wr_ptr + 1 ) & ( USART_RX_LEN - 1 );
+  // If FIFO is full, discarded.
+  if (next_rx_wr_ptr==USART_rx_rd_ptr)
+    return;
+  // else [Aread data and progress write pointer
+  else {
+    USART_rx_b[USART_rx_wr_ptr]=UDR;
+    USART_rx_wr_ptr=next_rx_wr_ptr;
+  }
+}
+
+ISR(USART_UDRE_vect){
+  // If fifo is empty, disable UDR intrrupt
+  if (USART_tx_wr_ptr==USART_tx_rd_ptr){
+    //UCR = (1 << RXCIE) | (0<< TXCIE) | (0<<UDRIE) | (1<<RXEN) | (1<<TXEN) |(0<<CHR9) ;
+    UCSRB = 1 << RXCIE | 0 << TXCIE | 0<<UDRIE | 1<< RXEN | 1<< TXEN | 0<<UCSZ2;
+  }
+  // pop tx data
+  else {
+    UDR = USART_tx_b[USART_tx_rd_ptr];
+    USART_tx_rd_ptr = ( USART_tx_rd_ptr + 1 ) & ( USART_TX_LEN - 1 );
+  }
+}
 
 void GB_init(){
-  GB_DDR  = 0 << GB_SI | 1 << GB_WRB | 1 << GB_RDB | 1 << GB_CSB | 1 << GB_SCK | 1 << GB_RCK | 1 << GB_OEB | 1 << GB_SO ;
-  GB_PORT =              1 << GB_WRB | 1 << GB_RDB | 1 << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB | 1 << GB_SO ;
+  GB1_DDR  = 0 << GB1_SI | 1 << GB1_WRB | 1 << GB1_PLB | 1 << GB1_CSB | 1 << GB1_SCK | 1 << GB1_RCK | 1 << GB1_OEB | 1 << GB1_SO ;
+  GB2_DDR  = 1 << GB2_RDB ;
+  GB1_PORT =               1 << GB1_WRB | 1 << GB1_PLB | 1 << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB | 1 << GB1_SO ;
+  GB2_PORT = 1 << GB2_RDB ;
 }
 
 void USART_init(){
@@ -95,12 +131,12 @@ void USART_init(){
   USART_tx_rd_ptr=0;
   // Init UBRR
   UBRRH = (unsigned char)((F_CPU/8/BAUDRATE-1)>>8);
-  UBRRL = (unsigned char)((F_CPU/8/BAUDRATE-1)&0xff);;
-  //UCR = (1 << RXCIE) | (0<< TXCIE) | (0<UDRIE) | (1<<RXEN) | (1<<TXEN) |(0<<CHR9) ;
+  UBRRL = (unsigned char)((F_CPU/8/BAUDRATE-1)&0xff);
   UCSRA = 1 << U2X | 0<<MPCM;
   UCSRB = 1 << RXCIE | 0 << TXCIE | 0<<UDRIE | 1<< RXEN | 1<< TXEN | 0<<UCSZ2;
   UCSRC = 0 << UMSEL | 0 << UPM1  | 0<<UPM0  | 0<< USBS | 1<<UCSZ1|1<<UCSZ0|0<<UCPOL;
 
+  // Enable Interrupt
   sei();  
 }
 
@@ -134,36 +170,6 @@ void USART_tx_push(unsigned char wr)
   UCSRB = 1 << RXCIE | 0 << TXCIE | 1<<UDRIE | 1<< RXEN | 1<< TXEN | 0<<UCSZ2;
 }
 
-
-
-ISR(USART_RX_vect){
-  unsigned char next_rx_wr_ptr;
-  next_rx_wr_ptr = ( USART_rx_wr_ptr + 1 ) & ( USART_RX_LEN - 1 );
-  // If FIFO is full, discarded.
-  if (next_rx_wr_ptr==USART_rx_rd_ptr)
-    return;
-  // else [Aread data and progress write pointer
-  else {
-    USART_rx_b[USART_rx_wr_ptr]=UDR;
-    USART_rx_wr_ptr=next_rx_wr_ptr;
-  }
-}
-
-ISR(USART_UDRE_vect){
-  // If fifo is empty, disable UDR intrrupt
-  if (USART_tx_wr_ptr==USART_tx_rd_ptr){
-    //UCR = (1 << RXCIE) | (0<< TXCIE) | (0<<UDRIE) | (1<<RXEN) | (1<<TXEN) |(0<<CHR9) ;
-    UCSRB = 1 << RXCIE | 0 << TXCIE | 0<<UDRIE | 1<< RXEN | 1<< TXEN | 0<<UCSZ2;
-  }
-  // pop tx data
-  else {
-    UDR = USART_tx_b[USART_tx_rd_ptr];
-    USART_tx_rd_ptr = ( USART_tx_rd_ptr + 1 ) & ( USART_TX_LEN - 1 );
-  }
-}
-
-unsigned char hex_to_bin(unsigned char hex);
-unsigned char nibble_to_hex(unsigned char bin);
 unsigned char hex_to_bin(unsigned char hex){
   if (hex>='0' && hex <='9')
     return hex - '0';
@@ -183,15 +189,13 @@ unsigned char nibble_to_hex(unsigned char bin){
     return 0;
 }
 
-void GB_msbfirst_shift(unsigned char data);
-unsigned char GB_read(unsigned char addrh,unsigned char addrl);
 
 void GB_msbfirst_shift(unsigned char data){
   unsigned char d;
   for (unsigned char l=0; l<8; l++){
     d = (data<<l)&0x80;
-    GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB | d ;
-    GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 1 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB | d ;
+    GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB | d ;
+    GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 1 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB | d ;
   }
 }
 
@@ -199,41 +203,64 @@ unsigned char GB_read(unsigned char addrh,unsigned char addrl){
   unsigned char dat;
   GB_msbfirst_shift(addrh);
   GB_msbfirst_shift(addrl);
-  // LOAD RD DATA
-  GB_PORT =              1 << GB_WRB | 0 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 1 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 0 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 0 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 0 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 0 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
+
+  // RDB low
+  GB2_PORT =                             0 << GB2_RDB ;
+
+  // RCK high
+  GB1_PORT =              1 << GB1_WRB | 0 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 1 << GB1_RCK | 1 << GB1_OEB ;
+
+  // RCK low
+  GB1_PORT =              1 << GB1_WRB | 0 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
+
+  // Wait (read data)
+  for (int l=0;l<GB_WAIT_RD;l++){
+    __asm__ __volatile__ ("nop");
+  }
+
+  // PLB high
+  GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
+
+  // RDB high
+  GB2_PORT =                             1 << GB2_RDB ;
 
   // LSBFIRST
-  dat = (GB_PIN&0x1);
+  dat = (GB1_PIN&0x1);
 
   for (int l=1;l<=7;l++){
-    GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 1 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-    GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-    dat|= (GB_PIN&0x1)<<l;
+    GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 1 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
+    GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
+    dat |= (GB1_PIN&0x1)<<l;
   }
   return dat;
 }
 
-void GB_write(unsigned char addrh,unsigned char addrl, unsigned char wr_data);
 
 void GB_write(unsigned char addrh,unsigned char addrl, unsigned char wr_data)
 {
   GB_msbfirst_shift(wr_data);
   GB_msbfirst_shift(addrh);
   GB_msbfirst_shift(addrl);
-  GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 1 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 0 << GB_OEB ;
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 0 << GB_OEB ;
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 0 << GB_OEB ;  
-  GB_PORT =              0 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 0 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 0 << GB_OEB ;
-  GB_PORT =              1 << GB_WRB | 1 << GB_RDB | chip_select << GB_CSB | 0 << GB_SCK | 0 << GB_RCK | 1 << GB_OEB ;  
+
+  // RCK high
+  GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 1 << GB1_RCK | 1 << GB1_OEB ;
+
+  // RCK low
+  GB1_PORT =              0 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
+
+  // OEB low
+  GB1_PORT =              0 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 0 << GB1_OEB ;
+
+  // Wait (write data)
+  for (int l=0;l<GB_WAIT_WR;l++){
+    __asm__ __volatile__ ("nop");
+  }
+  
+  // WRB high
+  GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 0 << GB1_OEB ;
+
+  // OEB high
+  GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;  
 }
 
 
@@ -242,19 +269,23 @@ void main ()
   // RX data
   unsigned char rxd;
   // state
-  // 0 IDLE(R/W)
-  // 1 RD CS (0or1 CS)
-  // 2 RD ADDR HH
-  // 3 RD ADDR HL
-  // 4 RD ADDR LH
-  // 5 RD ADDR LL 
-  // 6 WR CS
-  // 7 WR ADDR HH
-  // 8 WR ADDR HL
-  // 9 WR ADDR LL
-  //10 WR ADDR LL  
-  //11 WR DATA H
-  //12 WR DATA L
+  // 0: IDLE(R/W)
+  // 1: RD CS (0or1 CS)
+  // 2: RD ADDR HH
+  // 3: RD ADDR HL
+  // 4: RD ADDR LH
+  // 5: RD ADDR LL 
+  // 6: WR CS
+  // 7: WR ADDR HH
+  // 8: WR ADDR HL
+  // 9: WR ADDR LL
+  //10: WR ADDR LL  
+  //11: WR DATA H
+  //12: WR DATA L
+  //13: PAGE RD CS
+  //14: PAGE RD HH
+  //15: PAGE RD HL
+  
   unsigned char state;
   unsigned char address_hi;
   unsigned char address_lo;
@@ -288,7 +319,7 @@ void main ()
 	    state=13;
 	  break;
 	case 1:
-	  chip_select = hex_to_bin(rxd);
+	  chip_select = hex_to_bin(rxd)&0x1;
 	  state=2;
 	  break;
 	case 2:
@@ -314,7 +345,7 @@ void main ()
 	  state=0;
 	  break;
 	case 6:
-	  chip_select = hex_to_bin(rxd);
+	  chip_select = hex_to_bin(rxd)&0x1;
 	  state=7;
 	  break;	  
 	case 7:
@@ -347,7 +378,7 @@ void main ()
 	  state=0;
 	  break;
 	case 13:
-	  chip_select = hex_to_bin(rxd);
+	  chip_select = hex_to_bin(rxd)&0x1;
 	  state=14;
 	  break;
 	case 14:
