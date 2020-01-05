@@ -33,7 +33,7 @@ http://opensource.org/licenses/mit-license.php
 
 
 
-// 10MHz
+// 18.432MHz
 #define F_CPU 18432000UL
 
 #include <avr/io.h>
