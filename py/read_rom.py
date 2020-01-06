@@ -155,7 +155,7 @@ outfile=outfile.replace("_.gb",".gb")
 print(outfile)
 gbf=open((outfile),"wb")
 
-#NO ROM
+#NO MBC
 if (cart_type==0x00):
     if(rom_size==0x00):
         for ra in range(0x8000):
