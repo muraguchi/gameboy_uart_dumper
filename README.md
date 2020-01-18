@@ -45,24 +45,24 @@ It covers almost all commercially avairable cartridges.
 ## run log
 
 > $ ./read_rom.py 
-
-@@   @@ @@                             @@       
-@@@  @@ @@        @@                   @@       
-@@@  @@          @@@@                  @@       
-@@ @ @@ @@ @@ @@  @@  @@@@  @@ @@   @@@@@  @@@@ 
-@@ @ @@ @@ @@@ @@ @@ @@  @@ @@@ @@ @@  @@ @@  @@
-@@  @@@ @@ @@  @@ @@ @@@@@@ @@  @@ @@  @@ @@  @@
-@@  @@@ @@ @@  @@ @@ @@     @@  @@ @@  @@ @@  @@
-@@   @@ @@ @@  @@ @@  @@@@@ @@  @@  @@@@@  @@@@ 
-
-Logo check      : PASS
-Header checksum : PASS
-Title           : SUPER_MARIOLAND
-CGB flag        : Game Boy
-Cartridge type  : MBC1
-ROM size        : 64 KBytes / 4 banks
-RAM size        : 2 KBytes
-
-Bank 3/3 100.0 % 
-
-Global checksum : PASS
+> 
+> @@   @@ @@                             @@       
+> @@@  @@ @@        @@                   @@       
+> @@@  @@          @@@@                  @@       
+> @@ @ @@ @@ @@ @@  @@  @@@@  @@ @@   @@@@@  @@@@ 
+> @@ @ @@ @@ @@@ @@ @@ @@  @@ @@@ @@ @@  @@ @@  @@
+> @@  @@@ @@ @@  @@ @@ @@@@@@ @@  @@ @@  @@ @@  @@
+> @@  @@@ @@ @@  @@ @@ @@     @@  @@ @@  @@ @@  @@
+> @@   @@ @@ @@  @@ @@  @@@@@ @@  @@  @@@@@  @@@@ 
+> 
+> Logo check      : PASS
+> Header checksum : PASS
+> Title           : SUPER_MARIOLAND
+> CGB flag        : Game Boy
+> Cartridge type  : MBC1
+> ROM size        : 64 KBytes / 4 banks
+> RAM size        : 2 KBytes
+> 
+> Bank 3/3 100.0 % 
+> 
+> Global checksum : PASS
