@@ -19,7 +19,7 @@ Modify "config.py" as you like.
 
 # Usage
 
-run the host programs "read_rom.py" and then it dumps title named rom image.
+run "read_rom.py" and then it dumps title named rom image.
 
 # Supported ROM types
 
