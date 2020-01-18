@@ -27,7 +27,7 @@ This dumper supports following types of cartridges.
 It covers almost all commercially avairable cartridges.
 
 * NO MBC <br> Tetris, Dr Mario, Alley way, Othello... This type is often seen in the early released cartidges. 
-* MBC1 <br> Super Mario Land, Baseball, Pokemon red and many cartridges uses this types. 
+* MBC1 <br> Super Mario Land, Baseball, Pokemon red and many cartridges use this type. 
 * MBC2 <br> Golf, F1RACE, Kirby's pinball and so on. MBC2 has SRAM on itself.
 * MBC3 <br> Pokemon Yello, Pokemon Gold, Pokemon Silver, Bokujou GB and so on.
 * MBC5 <br> DQ12, DQ3, Zelda Yume wo mirushima DX, Mr.Driller, Bokujou GB2, Pokemon de panepon and so on. This type is often seen in the later released cartridges. 
