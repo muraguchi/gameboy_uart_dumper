@@ -38,6 +38,6 @@ It covers almost all commercially avairable cartridges.
 * MMM01 <br> Momotarou collection 2 and so on. This type has multiple images in 1 cartridge. Multiple dumping (each title and title selection program) will be required to dump it out. In this dumper version global checksum fails. but it dumped images works on mgba emulator.
 * PocketCamera <br> It is same with MBC3.
 
-#### MBC1 "Bomberman Quest" special patch
+#### "Bomberman Quest" special patch
 
-MBC1 "Bomberman Quest" cart has wrong global checksum. Because the global checksum of "Bomberman Quest" was calculated bank 0x20 as bank 0. This dumper has special patch for "Bomberman Quest". It dumps bank 0 data as both of bank 0 and 0x20 for the correct global checksum.
+"Bomberman Quest" MBC1 cart has a wrong global checksum on the header. Because the global checksum of "Bomberman Quest" was calculated bank 0x20 as bank 0. This dumper has special patch for "Bomberman Quest". It dumps bank 0 data as both of bank 0 and 0x20 for the correct global checksum.
