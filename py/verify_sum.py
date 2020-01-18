@@ -19,7 +19,7 @@ else:
         fgb.seek(addr)
         calc_hc = ( calc_hc - (int.from_bytes(fgb.read(1),'little')) - 1 ) % 0x100
     if (calc_hc==header_hc):
-        print ("HEADER CHECKSUM COMPARE RESULT : OK")
+        print ("HEADER CHECKSUM COMPARE RESULT : PASS")
     else:
         print ("HEADER CHECKSUM COMPARE RESULT : ERROR")
         print ("Header Checksum at 0x14d : 0x%02X" % header_hc)
@@ -47,7 +47,7 @@ else:
         else:
             calc_gc = ( (calc_gc + int.from_bytes(fgb.read(1),'little')) % 0x10000)
     if (calc_gc==header_gc):
-        print ("GLOBAL CHECKSUM COMPARE RESULT : OK")
+        print ("GLOBAL CHECKSUM COMPARE RESULT : PASS")
     else:
         print ("GLOBAL CHECKSUM COMPARE RESULT : ERROR")
         print ("Global Checksum at 0x14E:0x14F 0x%04X" % header_gc)

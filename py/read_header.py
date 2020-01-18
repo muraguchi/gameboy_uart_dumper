@@ -1,7 +1,13 @@
 #! /usr/bin/python
 import serial
+import config
 
-ser = serial.Serial('/dev/ttyUSB0',460800,timeout=None)
+
+
+
+ser = serial.Serial(config.SERIAL_DEVICE,
+                    config.SERIAL_BAUDRATE,
+                    timeout=config.SERIAL_TIMEOUT_SEC)
 
 # Get_cart_type
 ser.write (("R1%04X" %( 0x0143)).encode() )
@@ -44,49 +50,51 @@ else:
     print("CGB flag: Game Boy")
 
 if ( cart_type==0x00):
-    print("Cartrige type: ROM ONLY")
+    print("Cartridge type: ROM ONLY")
 elif ( cart_type==0x01):
-    print("Cartrige type: MBC1")
+    print("Cartridge type: MBC1")
 elif ( cart_type==0x02):
-    print("Cartrige type: MBC1+RAM")
+    print("Cartridge type: MBC1+RAM")
 elif ( cart_type==0x03):
-    print("Cartrige type: MBC1+RAM+BATTERY")
+    print("Cartridge type: MBC1+RAM+BATTERY")
 elif ( cart_type==0x05):
-    print("Cartrige type: MBC2")
+    print("Cartridge type: MBC2")
 elif ( cart_type==0x06):
-    print("Cartrige type: MBC2+BATTERY")
+    print("Cartridge type: MBC2+BATTERY")
+elif ( cart_type==0x0D):
+    print("Cartridge type: MMM01")
 elif ( cart_type==0x0F):
-    print("Cartrige type: MBC3+TIMER+BATTERY")
+    print("Cartridge type: MBC3+TIMER+BATTERY")
 elif ( cart_type==0x10):
-    print("Cartrige type: MBC3+TIMER+RAM+BATTERY")
+    print("Cartridge type: MBC3+TIMER+RAM+BATTERY")
 elif ( cart_type==0x11):
-    print("Cartrige type: MBC3")
+    print("Cartridge type: MBC3")
 elif ( cart_type==0x12):
-    print("Cartrige type: MBC3+RAM")
+    print("Cartridge type: MBC3+RAM")
 elif ( cart_type==0x13):
-    print("Cartrige type: MBC3+RAM+BATTERY")
+    print("Cartridge type: MBC3+RAM+BATTERY")
 elif ( cart_type==0x19):
-    print("Cartrige type: MBC5")
+    print("Cartridge type: MBC5")
 elif ( cart_type==0x1A):
-    print("Cartrige type: MBC5+RAM")
+    print("Cartridge type: MBC5+RAM")
 elif ( cart_type==0x1B):
-    print("Cartrige type: MBC5+RAM+BATTERY")
+    print("Cartridge type: MBC5+RAM+BATTERY")
 elif ( cart_type==0x1C):
-    print("Cartrige type: MBC5+RUMBLE")
+    print("Cartridge type: MBC5+RUMBLE")
 elif ( cart_type==0x1D):
-    print("Cartrige type: MBC5+RUMBLE+RAM")
+    print("Cartridge type: MBC5+RUMBLE+RAM")
 elif ( cart_type==0x1E):
-    print("Cartrige type: MBC5+RUMBLE+RAM+BATTERY")
+    print("Cartridge type: MBC5+RUMBLE+RAM+BATTERY")
 elif ( cart_type==0x22):
-    print("Cartrige type: MBC7+SENSOR+RAM+BATTERY")
+    print("Cartridge type: MBC7+SENSOR+RAM+BATTERY")
 elif ( cart_type==0xFD):
-    print("Cartrige type: TAMA5")
+    print("Cartridge type: TAMA5")
 elif ( cart_type==0xFE):
-    print("Cartrige type: HuC3")
+    print("Cartridge type: HuC3")
 elif ( cart_type==0xFF):
-    print("Cartrige type: HuC1")
+    print("Cartridge type: HuC1")
 else:
-    print("Cartrige type: 0x%02X" % (cart_type))
+    print("Cartridge type: 0x%02X" % (cart_type))
     
 if (rom_size==0x00):
     print("ROM size: 32 KBytes")

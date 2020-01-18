@@ -40,7 +40,7 @@ http://opensource.org/licenses/mit-license.php
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-// UART baudrate : 460.8kbps
+// UART baudrate :460.8kbps
 #define BAUDRATE 460800
 
 // receive buffer 2^USART_RX_SZ_BITS = USART_RX_LEN
@@ -66,6 +66,7 @@ http://opensource.org/licenses/mit-license.php
 #define GB1_OEB     PB6
 #define GB1_SO      PB7
 #define GB2_RDB     PD2
+#define GB2_RSTN    PD3
 #define GB_WAIT_RD  3
 #define GB_WAIT_WR  3
 
@@ -78,6 +79,7 @@ unsigned char nibble_to_hex(unsigned char bin);
 void GB_msbfirst_shift(unsigned char data);
 unsigned char GB_read(unsigned char addrh,unsigned char addrl);
 void GB_write(unsigned char addrh,unsigned char addrl, unsigned char wr_data);
+void GB_reset(unsigned char data);
 
 static volatile unsigned char USART_rx_wr_ptr;
 static volatile unsigned char USART_rx_rd_ptr;
@@ -86,6 +88,7 @@ static volatile unsigned char USART_tx_wr_ptr;
 static volatile unsigned char USART_tx_rd_ptr;
 static volatile unsigned char USART_tx_b[USART_TX_LEN];
 static volatile unsigned char chip_select;
+static volatile unsigned char reset;
 
 ISR(USART_RX_vect){
   unsigned char next_rx_wr_ptr;
@@ -115,9 +118,9 @@ ISR(USART_UDRE_vect){
 
 void GB_init(){
   GB1_DDR  = 0 << GB1_SI | 1 << GB1_WRB | 1 << GB1_PLB | 1 << GB1_CSB | 1 << GB1_SCK | 1 << GB1_RCK | 1 << GB1_OEB | 1 << GB1_SO ;
-  GB2_DDR  = 1 << GB2_RDB ;
+  GB2_DDR  = 1 << GB2_RDB | 1 << GB2_RSTN;
   GB1_PORT =               1 << GB1_WRB | 1 << GB1_PLB | 1 << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB | 1 << GB1_SO ;
-  GB2_PORT = 1 << GB2_RDB ;
+  GB2_PORT = 1 << GB2_RDB | 1 << GB2_RSTN;
 }
 
 void USART_init(){
@@ -205,7 +208,7 @@ unsigned char GB_read(unsigned char addrh,unsigned char addrl){
   GB_msbfirst_shift(addrl);
 
   // RDB low
-  GB2_PORT =                             0 << GB2_RDB ;
+  GB2_PORT =                             0 << GB2_RDB | reset << GB2_RSTN;
 
   // RCK high
   GB1_PORT =              1 << GB1_WRB | 0 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 1 << GB1_RCK | 1 << GB1_OEB ;
@@ -222,7 +225,7 @@ unsigned char GB_read(unsigned char addrh,unsigned char addrl){
   GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;
 
   // RDB high
-  GB2_PORT =                             1 << GB2_RDB ;
+  GB2_PORT =                             1 << GB2_RDB | reset << GB2_RSTN;
 
   // LSBFIRST
   dat = (GB1_PIN&0x1);
@@ -263,6 +266,11 @@ void GB_write(unsigned char addrh,unsigned char addrl, unsigned char wr_data)
   GB1_PORT =              1 << GB1_WRB | 1 << GB1_PLB | chip_select << GB1_CSB | 0 << GB1_SCK | 0 << GB1_RCK | 1 << GB1_OEB ;  
 }
 
+void GB_reset(unsigned char data)
+{
+  reset = data;
+  GB2_PORT =  1 << GB2_RDB | reset << GB2_RSTN;
+}
 
 void main ()
 {
@@ -282,9 +290,13 @@ void main ()
   //10: WR ADDR LL  
   //11: WR DATA H
   //12: WR DATA L
-  //13: PAGE RD CS
-  //14: PAGE RD HH
-  //15: PAGE RD HL
+  //13: PAGE 16K RD CS
+  //14: PAGE 16K RD ADDR HH
+  //15: PAGE 16K RD ADDR HL
+  //16: PAGE 2K  RD CS
+  //17: PAGE 2K  RD ADDR HH
+  //18: PAGE 2K  RD ADDR HL
+  //19: GB RESET VALUE
   
   unsigned char state;
   unsigned char address_hi;
@@ -294,19 +306,25 @@ void main ()
   unsigned int  address_pgrd;
 
   GB_init();
-  
-  // Wait 3 sec
-  for(int l=0;l<3000;l++) {
+
+  // assert reset
+  GB_reset(0);
+  // Wait 100ms
+  for(int l=0;l<100;l++) {
     _delay_ms(1);
   }
-  
+  // deassert reset
+  GB_reset(1);
+
   USART_init();
   state =0;
   while(1)
     {
       // R<0|1><ADDRESS>          ex. R10140    (READ  0x0140 with CS=1)
-      // W<0|1><ADDRESS><DATA>    ex. W0D000FF  (WRITE FF to 0xD000 with CS=0)  
+      // W<0|1><ADDRESS><DATA>    ex. W0D000FF  (WRITE FF to 0xD000 with CS=0)                   
       // P<0|1><ADDRESS_HI>       ex. P100      (16KB PAGE READ from 0x0000 to 0x3FFF with CS=1)
+      // p<0|1><ADDRESS_HI>       ex. p0A0      ( 2KB PAGE READ from 0xA000 to 0xA7FF with CS=0)
+      // S<0|1>                   ex. S0        (GB RESET low)
       // Get new letter
       while (USART_rx_pop(&rxd)) {
 	switch (state) {
@@ -317,6 +335,10 @@ void main ()
 	    state=6;
 	  else if (rxd=='P')
 	    state=13;
+	  else if (rxd=='p')
+	    state=16;
+	  else if (rxd=='S')
+	    state=19;
 	  break;
 	case 1:
 	  chip_select = hex_to_bin(rxd)&0x1;
@@ -395,10 +417,36 @@ void main ()
 	    USART_tx_push(nibble_to_hex(rw_data&0xf));
 	  }	    
 	  state=0;
-	  break;	  
+	  break;
+	case 16:
+	  chip_select = hex_to_bin(rxd)&0x1;
+	  state=17;
+	  break;
+	case 17:
+	  address_hi = hex_to_bin(rxd)<<4;
+	  state=18;
+	  break;
+	case 18:
+	  address_hi |= hex_to_bin(rxd);
+	  for(address_pgrd=address_hi<<8;address_pgrd<((address_hi<<8)+0x800); address_pgrd++){
+	    rw_data=GB_read(address_pgrd>>8,(address_pgrd&0xff));
+	    // output hi nibble
+	    USART_tx_push(nibble_to_hex(rw_data>>4));
+	    // output lo nibble
+	    USART_tx_push(nibble_to_hex(rw_data&0xf));
+	  }
+	  state=0;
+	  break;
+	case 19:
+	  GB_reset(hex_to_bin(rxd)&0x1);
+	  USART_tx_push(nibble_to_hex(reset));
+	  state=0;
+	  break;
+	default:
+	  state=0;
+	  break;
 	}
-
-
+	
       } // RX POP
     } // INF
 }
