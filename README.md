@@ -1,15 +1,15 @@
 # gameboy_uart_dumper
 Game Boy / Game Boy Color dumper with AVR attiny2313 and FT232R.
 
-## Dumper schematic
+## Schematic
 
 https://github.com/muraguchi/gameboy_uart_dumper/blob/master/kicad/gameboy_uart_dumper.pdf
 
-## Dumper firmware
+## Firmware
 
 https://github.com/muraguchi/gameboy_uart_dumper/tree/master/src
 
-## Dumper host programs
+## Host programs
 
 https://github.com/muraguchi/gameboy_uart_dumper/tree/master/py
 
@@ -42,7 +42,7 @@ It covers almost all commercially avairable cartridges.
 
 "Bomberman Quest" MBC1 cart has a wrong global checksum on the header. Because the global checksum of "Bomberman Quest" was calculated bank 0x20 as bank 0. This dumper has special patch for "Bomberman Quest". It dumps bank 0 data as both of bank 0 and 0x20 for the correct global checksum.
 
-## run log
+## run log ( sample )
 
     $ ./read_rom.py 
     
