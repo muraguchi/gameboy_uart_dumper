@@ -44,7 +44,7 @@ It covers almost all commercially avairable cartridges.
 
 ## run log
 
- $ ./read_rom.py 
+    $ ./read_rom.py 
  
  @@   @@ @@                             @@       
  @@@  @@ @@        @@                   @@       
