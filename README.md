@@ -41,3 +41,28 @@ It covers almost all commercially avairable cartridges.
 #### "Bomberman Quest" special patch
 
 "Bomberman Quest" MBC1 cart has a wrong global checksum on the header. Because the global checksum of "Bomberman Quest" was calculated bank 0x20 as bank 0. This dumper has special patch for "Bomberman Quest". It dumps bank 0 data as both of bank 0 and 0x20 for the correct global checksum.
+
+## run log
+
+> $ ./read_rom.py 
+
+@@   @@ @@                             @@       
+@@@  @@ @@        @@                   @@       
+@@@  @@          @@@@                  @@       
+@@ @ @@ @@ @@ @@  @@  @@@@  @@ @@   @@@@@  @@@@ 
+@@ @ @@ @@ @@@ @@ @@ @@  @@ @@@ @@ @@  @@ @@  @@
+@@  @@@ @@ @@  @@ @@ @@@@@@ @@  @@ @@  @@ @@  @@
+@@  @@@ @@ @@  @@ @@ @@     @@  @@ @@  @@ @@  @@
+@@   @@ @@ @@  @@ @@  @@@@@ @@  @@  @@@@@  @@@@ 
+
+Logo check      : PASS
+Header checksum : PASS
+Title           : SUPER_MARIOLAND
+CGB flag        : Game Boy
+Cartridge type  : MBC1
+ROM size        : 64 KBytes / 4 banks
+RAM size        : 2 KBytes
+
+Bank 3/3 100.0 % 
+
+Global checksum : PASS
