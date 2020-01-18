@@ -26,17 +26,17 @@ run "read_rom.py" and then it dumps title named rom image.
 This dumper supports following types of cartridges.
 It covers almost all commercially avairable cartridges.
 
-NO MBC: Tetris, Dr Mario, Alley way, Othello... This type is often seen in the early released cartidges. 
-MBC1: Super Mario Land, Baseball, Pokemon red and many cartridges uses this types. 
-MBC2: Golf, F1RACE, Kirby's pinball and so on. MBC2 has SRAM on itself.
-MBC3: Pokemon Yello, Pokemon Gold, Pokemon Silver, Bokujou GB and so on.
-MBC5: DQ12, DQ3, Zelda Yume wo mirushima DX, Mr.Driller, Bokujou GB2, Pokemon de panepon and so on. This type is often seen in the later released cartridges. 
-MBC7: Korokoro Kirby.
-HuC1: Pokemon Card GB, Super B-daman and so on. This type of cart has a infrared port on the top.
-HuC3: Robot ponkkotu sun, start and so on.
-TAMA5: Tamagocchi3. TAMA5 is designated for Tamagocchi3. This dumper supports ROM dumping with correct checksum.
-MMM01: Momotarou collection 2 and so on. This type has multiple images in 1 cartridge. Multiple dumping (each title and title selection program) will be required to dump it out. In this dumper version global checksum fails. but it dumped images works on mgba emulator.
-PocketCamera: It is same with MBC3.
+* NO MBC  Tetris, Dr Mario, Alley way, Othello... This type is often seen in the early released cartidges. 
+* MBC1  Super Mario Land, Baseball, Pokemon red and many cartridges uses this types. 
+* MBC2  Golf, F1RACE, Kirby's pinball and so on. MBC2 has SRAM on itself.
+* MBC3  Pokemon Yello, Pokemon Gold, Pokemon Silver, Bokujou GB and so on.
+* MBC5  DQ12, DQ3, Zelda Yume wo mirushima DX, Mr.Driller, Bokujou GB2, Pokemon de panepon and so on. This type is often seen in the later released cartridges. 
+* MBC7  Korokoro Kirby.
+* HuC-1 Pokemon Card GB, Super B-daman and so on. This type of cart has a infrared port on the top.
+* HuC-3 Robot ponkkotu sun, start and so on.
+* TAMA5  Tamagocchi3. TAMA5 is designated for Tamagocchi3. This dumper supports ROM dumping with correct checksum.
+* MMM01  Momotarou collection 2 and so on. This type has multiple images in 1 cartridge. Multiple dumping (each title and title selection program) will be required to dump it out. In this dumper version global checksum fails. but it dumped images works on mgba emulator.
+* PocketCamera  It is same with MBC3.
 
 # MBC1 "Bomberman Quest" special patch
 
