@@ -1,6 +1,11 @@
 # gameboy_uart_dumper
 Game Boy / Game Boy Color dumper with AVR attiny2313 and FT232R.
 
+![demo](https://raw.github.com/wiki/muraguchi/gameboy_uart_dumper/images/gameboy_uart_dumper.gif)
+
+
+
+
 ## Schematic
 
 https://github.com/muraguchi/gameboy_uart_dumper/blob/master/kicad/gameboy_uart_dumper.pdf
