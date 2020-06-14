@@ -136,7 +136,7 @@ rom_size = int(ser.read(2).decode(),16)
 
 # Get RAM size
 
-ser.write (("R1%04X" %( 0x0148)).encode() )
+ser.write (("R1%04X" %( 0x0149)).encode() )
 ram_size = int(ser.read(2).decode(),16)
 
 
